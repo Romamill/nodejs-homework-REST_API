@@ -1,17 +1,50 @@
+
+
 const Contact = require('../models/contactModel');
 
-const updateFavoriteStatus = async (req, res, next) => {
+const getAllContacts = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const contacts = await Contact.find({ owner: userId });
+    res.json(contacts);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getContactById = async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
-    const { favorite } = req.body;
-
-    if (favorite === undefined) {
-      return res.status(400).json({ message: 'missing field favorite' });
+    const userId = req.user._id;
+    const contact = await Contact.findOne({ _id: contactId, owner: userId });
+    if (contact) {
+      res.json(contact);
+    } else {
+      res.status(404).json({ message: 'Not found' });
     }
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const updatedContact = await Contact.findByIdAndUpdate(
-      contactId,
-      { favorite },
+const createContact = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const newContact = { ...req.body, owner: userId };
+    const createdContact = await Contact.create(newContact);
+    res.status(201).json(createdContact);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateContact = async (req, res, next) => {
+  try {
+    const contactId = req.params.contactId;
+    const userId = req.user._id;
+    const updatedContact = await Contact.findOneAndUpdate(
+      { _id: contactId, owner: userId },
+      req.body,
       { new: true }
     );
 
@@ -28,7 +61,8 @@ const updateFavoriteStatus = async (req, res, next) => {
 const deleteContact = async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
-    const result = await Contact.findByIdAndDelete(contactId);
+    const userId = req.user._id;
+    const result = await Contact.findOneAndDelete({ _id: contactId, owner: userId });
 
     if (result) {
       res.json({ message: 'Contact deleted' });
@@ -41,6 +75,9 @@ const deleteContact = async (req, res, next) => {
 };
 
 module.exports = {
-  updateFavoriteStatus,
+  getAllContacts,
+  getContactById,
+  createContact,
+  updateContact,
   deleteContact,
 };
