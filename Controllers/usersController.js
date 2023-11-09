@@ -10,6 +10,7 @@ const jimp = require('jimp');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const sgMail = require('@sendgrid/mail');
+const emailMessages = require('./emailMessages');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -39,7 +40,11 @@ const registerUser = async (req, res) => {
       verificationToken,
     });
 
-    sendVerificationEmail(email, verificationToken);
+    const verificationMsg = emailMessages.verification(
+      `${process.env.SERVER_URL}/api/users/verify/${verificationToken}`
+    );
+
+    await sgMail.send(verificationMsg);
 
     return res.status(201).json({
       user: {
@@ -135,13 +140,7 @@ const updateUserAvatar = async (req, res) => {
 const sendVerificationEmail = async (email, token) => {
   const verificationLink = `${process.env.SERVER_URL}/api/users/verify/${token}`;
 
-  const msg = {
-    to: 'romamill666@gmail.com',
-    from: process.env.SENDER_EMAIL,
-    subject: 'Email Verification',
-    text: `Click on the link to verify your email: ${verificationLink}`,
-    html: `<p>Click <a href="${verificationLink}">here</a> to verify your email</p>`,
-  };
+  const msg = emailMessages.verification(verificationLink);
 
   await sgMail.send(msg);
 };
