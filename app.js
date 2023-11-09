@@ -1,4 +1,5 @@
-require('dotenv').config();
+
+
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -7,6 +8,7 @@ const contactsRouter = require('./routes/api/contacts');
 const usersRouter = require('./routes/api/users');
 const multer = require('multer');
 const User = require('./models/userModel');
+const usersController = require('./Controllers/usersController');
 
 const app = express();
 
@@ -31,9 +33,10 @@ app.use('/api/contacts', contactsRouter);
 app.use('/api/users', usersRouter);
 
 
+app.get('/api/users/verify/:verificationToken', usersController.verifyUser);
+
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
 
 app.patch('/api/users/avatars', upload.single('avatar'), async (req, res) => {
   const userId = req.user._id;
